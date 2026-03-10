@@ -1,0 +1,363 @@
+# UI Reference-Based Layout Workflow
+
+레퍼런스 이미지 기반 Cocos Creator 2.x UI 배치를 멀티에이전트 오케스트레이션으로 수행하는 워크플로우.
+
+## 워크플로우 개요
+
+```
+Phase 0: 레퍼런스 오버레이 배치
+    ↓
+Phase 1: 추론 (Inference Agent)
+    ↓
+Phase 1.5: 추론 검증 (Oracle Agent)
+    ↓
+Phase 2: 설계안 → 사용자 승인
+    ↓
+Phase 3: 구현 (Implementation Agent)
+    ↓
+Phase 4: 최종 검증 (Verification Agent)
+```
+
+---
+
+## 에이전트 구성
+
+| 역할 | 에이전트 타입 | 담당 Phase | 도구 |
+|------|-------------|-----------|------|
+| **추론** | `oracle-medium` / `multimodal-looker` | Phase 1 | Read(이미지), Glob, Grep |
+| **검증** | `oracle-medium` | Phase 1.5, 4 | Read(문서), 분석 |
+| **설계** | 리더 직접 | Phase 2 | AskUserQuestion |
+| **구현** | `sisyphus-junior` | Phase 3 | Bash(curl MCP) |
+| **오케스트레이터** | 리더 (Opus) | 전체 | Task, TaskCreate, SendMessage |
+
+### 에이전트 라우팅 기준
+
+- 단순 속성 변경 (< 10개 API): 리더 직접 실행
+- 중간 복잡도 (10~30개 API): `sisyphus-junior` 위임
+- 대규모 배치 (30개+ API): 스크립트 파일 생성 → Bash 실행
+
+---
+
+## Phase 0: 레퍼런스 오버레이 배치
+
+**목적**: 사용자가 에디터에서 실시간으로 결과를 레퍼런스와 비교할 수 있도록 함.
+
+### 절차
+
+1. 레퍼런스 이미지의 Texture UUID 확인
+   ```bash
+   # .meta 파일에서 UUID 추출
+   grep '"uuid"' <image>.png.meta
+   ```
+
+2. `scene_place_reference_image` 호출
+   ```json
+   {
+     "name": "scene_place_reference_image",
+     "arguments": {
+       "textureUuid": "<texture-uuid>",
+       "width": 750,
+       "height": 1334,
+       "opacity": 128,
+       "name": "__REF_OVERLAY__"
+     }
+   }
+   ```
+   - `width`/`height`: 프로젝트 디자인 해상도에 맞춤
+   - `opacity`: 128 (50%) 권장 — 너무 투명하면 비교 어려움
+   - zIndex -9999로 자동 배치됨
+
+3. 사용자에게 오버레이 확인 요청
+
+### 완료 후 정리
+
+작업 완료 시 `scene_remove_reference_image`로 오버레이 제거.
+
+---
+
+## Phase 1: 추론 (Inference)
+
+**목적**: 레퍼런스 이미지를 분석하여 UI 요소 식별, 좌표 측정, 에셋 매칭 수행.
+
+### 입력
+
+- 레퍼런스 이미지 (Read 도구로 시각 확인)
+- 프로젝트 에셋 이미지들 (후보 에셋 시각 확인)
+- 디자인 해상도 정보
+
+### 추론 절차
+
+#### 1-1. Scale Factor 계산
+
+```
+scale_factor = designResolution.width / referenceImage.width
+```
+
+#### 1-2. 좌표 변환 공식
+
+```
+image_center = (ref_width / 2, ref_height / 2)
+design_x = (image_x - center_x) × scale_factor
+design_y = (center_y - image_y) × scale_factor   // Y축 반전 (Cocos: 위가 +)
+```
+
+#### 1-3. UI 요소 식별
+
+레퍼런스에서 각 UI 요소를 식별하고 테이블로 정리:
+
+| # | 요소 | 형태 | 색상 | 위치 (image px) | 크기 (image px) |
+|---|------|------|------|----------------|----------------|
+| 1 | ... | 원형/pill/사각 | ... | (x, y) | w×h |
+
+#### 1-4. 에셋 매칭 (점수제)
+
+**반드시 에셋 이미지를 Read 도구로 직접 확인한 후 매칭.**
+
+점수 기준:
+| 기준 | 점수 | 설명 |
+|------|------|------|
+| 형태 일치 | +3 | pill↔pill, 원형↔원형, 사각↔사각 |
+| 색상 계열 | +2 | 파랑↔파랑, 노랑↔노랑 |
+| 비율 유사 | +1 | 가로/세로 비율 ±10% 이내 |
+| 이름 키워드 | +0.5 | 보조 힌트만 (단독 근거 불가) |
+
+**5점 이상이면 매칭 확정. 4점 이하면 대안 탐색.**
+
+#### 1-5. 에셋 UUID 수집
+
+```bash
+grep '"uuid"' <asset>.png.meta
+# 첫 번째 uuid = Texture UUID (set_spriteframe에 사용)
+```
+
+### 출력: 추론 문서
+
+`docs/inference-{PopupName}.md` 파일 생성. 필수 섹션:
+
+1. **레퍼런스 분석** — 이미지 크기, scale factor, 좌표 변환식
+2. **UI 요소 식별 테이블** — 위치, 크기, 형태, 색상
+3. **에셋 매칭 테이블** — 점수, 근거
+4. **노드 트리 설계** — 부모-자식 구조, 컴포넌트
+5. **좌표 설계** — 디자인 좌표 변환 결과
+6. **SLICED Sprite 상세** — scale, 내부 size, border
+7. **컴포넌트/스크립트 체크리스트** — 각 노드별 필요 컴포넌트
+8. **에셋 UUID 목록** — Texture UUID 참조표
+9. **추론 근거 요약** — 각 결정의 이유
+
+---
+
+## Phase 1.5: 추론 검증
+
+**목적**: 추론 결과의 수학적 정확성과 구조적 타당성 검증.
+
+### 검증 항목
+
+| # | 항목 | 방법 |
+|---|------|------|
+| 1 | Scale factor 계산 | 수식 검증 |
+| 2 | 좌표 변환 정확성 | 개별 좌표 역산 |
+| 3 | SLICED 계산 | scale × inner_size = target_size 확인 |
+| 4 | 에셋 매칭 합리성 | 형태 기반 점수 재확인 |
+| 5 | 노드 트리 Cocos 2.x 표준 | 부모-자식 관계, 컴포넌트 배치 |
+| 6 | 자식 scale 영향 | SLICED+Scale 시 자식 노드 영향 여부 |
+
+### 검증 에이전트 프롬프트 템플릿
+
+```
+추론 문서 [path]를 검증해주세요.
+검증 항목:
+1. scale factor 계산 정확성
+2. 좌표 변환 (역산으로 검증)
+3. SLICED sprite 계산 (scale × size = target)
+4. 에셋 매칭 형태 기반 타당성
+5. 노드 트리 Cocos 2.x 표준 준수
+문제 발견 시 구체적 수정 제안 포함.
+```
+
+---
+
+## Phase 2: 설계안 작성 및 사용자 승인
+
+**목적**: 구현 전 사용자에게 노드 구조, 에셋 매칭, 컴포넌트 구성을 승인받음.
+
+### 승인 요청 포맷
+
+```
+**노드 구조** (총 N개 노드):
+SettingPopup
+├── bg (img_back, SLICED 풀스크린)
+├── panel (img_ingame_popupB, SLICED 584×814)
+│   ├── Button1 → Bg(asset SLICED) + Icon(asset) + Label "텍스트"
+│   └── ...
+└── CloseButton → Bg(asset) + Icon(asset)
+
+**컴포넌트**: cc.Button(transition), cc.Widget, cc.Label(fontSize)
+**SLICED+Scale**: asset→scale값
+```
+
+### 승인 옵션
+
+- **승인 - 진행**: 그대로 구현 시작
+- **수정 필요**: 사용자가 수정 사항 전달
+- **전체 재설계**: Phase 1부터 다시
+
+### 스크립트 체크 (필수)
+
+설계안에 반드시 포함:
+- 어떤 커스텀 스크립트를 붙일지 (예: SettingPopup.ts, SoundToggle.ts)
+- cc.Button의 click handler 대상
+- 토글 상태 관리 방법
+
+---
+
+## Phase 3: 구현
+
+**목적**: 승인된 설계안을 MCP API로 실제 노드 생성 및 속성 설정.
+
+### 구현 순서
+
+```
+1. 부모 노드 생성/확인 (create_node / get_node_info)
+2. 자식 노드 생성 (create_node with parentUuid)
+3. 컴포넌트 추가 (add_component)
+4. Sprite Frame 설정 (set_spriteframe)
+5. 위치/크기 설정 (set_node_property, set_node_transform)
+6. SLICED 설정 (set_component_property: type=1, sizeMode=0)
+7. Label 설정 (set_component_property: string, fontSize)
+8. Font 설정 (set_label_font)
+9. Button 설정 (set_component_property: transition=3)
+10. Widget 설정 (set_component_property: isAlignTop, top, ...)
+```
+
+### MCP API 호출 패턴
+
+```bash
+curl -s -X POST http://localhost:3001/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{
+    "name":"TOOL_NAME",
+    "arguments":{...}
+  }}'
+```
+
+### SLICED + Scale 기법
+
+> **공식 및 구현 패턴 상세**: `shareable/cocos/COCOS-SLICED-SPRITE.md`
+
+```
+scale = target_height / original_height
+inner_width = target_width / scale
+```
+
+예시 (230×203 → 459×109): `scale=0.537`, `inner_width=855`
+→ Bg 자식: width=855, height=203, scale=0.537, spriteType=SLICED(1)
+
+### 한글 라벨 인코딩
+
+MCP JSON-RPC로 한글 텍스트 전달 시 UTF-8 기본 지원. 결과 조회 시 인코딩 깨짐이 보일 수 있으나 에디터 내 실제 표시는 정상.
+
+---
+
+## Phase 4: 최종 검증
+
+**목적**: 구현 결과가 설계안 및 레퍼런스와 일치하는지 확인.
+
+### 검증 방법
+
+1. **자동 검증**: `scene_analyze_reference_layout` 호출
+   ```json
+   {
+     "name": "scene_analyze_reference_layout",
+     "arguments": { "parentUuid": "<root-uuid>" }
+   }
+   ```
+   반환값에서 각 노드의 x, y, width, height, components 확인.
+
+2. **설계안 대비 비교**: 추론 문서의 좌표 테이블과 실제 값 비교
+   - 위치 오차 ±5 이내 → OK
+   - 크기 오차 ±3 이내 → OK
+
+3. **시각적 확인**: 사용자에게 레퍼런스 오버레이와 비교 요청
+
+4. **씬 저장**: `scene_save_scene` 또는 사용자에게 Ctrl+S 요청
+
+### 검증 체크리스트
+
+- [ ] 모든 노드 생성됨
+- [ ] 모든 sprite frame 설정됨
+- [ ] 모든 위치/크기가 설계안과 일치
+- [ ] SLICED sprite가 정상 렌더링됨
+- [ ] Label 텍스트/폰트/크기 정확
+- [ ] Button transition 설정됨
+- [ ] Widget 설정됨 (해당 노드만)
+- [ ] 레퍼런스 오버레이와 시각적 일치
+
+---
+
+## 태스크 관리
+
+### TodoWrite 활용
+
+```
+Phase 0: 레퍼런스 오버레이 배치 → completed
+Phase 1: 추론 — 레퍼런스 분석 및 에셋 매칭 → in_progress
+Phase 1.5: 추론 검증 → pending (blocked by Phase 1)
+Phase 2: 설계안 작성 및 사용자 승인 → pending (blocked by Phase 1.5)
+Phase 3: 구현 — 노드 생성 및 속성 설정 → pending (blocked by Phase 2)
+Phase 4: 최종 검증 → pending (blocked by Phase 3)
+```
+
+### 추론 기록 필수
+
+**모든 Phase에서 작업 내용 및 추론 근거를 기록:**
+
+- Phase 1: 추론 문서 (`inference-{name}.md`) 생성
+- Phase 3: 각 MCP API 호출 결과 성공/실패 로그
+- Phase 4: 검증 결과 및 수정 사항
+
+---
+
+## 사용 예시: SettingPopup
+
+### Phase 0
+```
+scene_place_reference_image(textureUuid="8ceb4f4b-...", width=750, height=1334, opacity=128)
+→ __REF_OVERLAY__ 노드 생성, zIndex -9999
+```
+
+### Phase 1 추론 결과 요약
+- Scale factor: 1.913 (750/392)
+- UI 요소 8개 식별 (Close, Sound, Effect, Lobby, Chapter, LevelInfo, Skip, Rank)
+- 에셋 12종 매칭 완료 (모두 5.5점 이상)
+
+### Phase 2 설계안
+```
+SettingPopup (24개 노드)
+├── bg — Widget LRTB=0
+├── panel (584×814) — img_ingame_popupB SLICED
+│   ├── SoundToggle (-67,343) — btn_ingame_optionB + icon_option_sound
+│   ├── EffectToggle (67,343) — btn_ingame_optionB + icon_option_effectsound + off
+│   ├── LobbyButton (0,195) — btn_blue SLICED + icon_home + "로비로"
+│   ├── ChapterButton (0,67) — btn_blue SLICED + icon_chapter + "챕터선택"
+│   ├── LevelInfo (0,-63) — "Lv.1\n최고급 돼지고기베이컨"
+│   ├── SkipButton (0,-207) — btn_yellow SLICED + icon_ads + "건너뛰기"
+│   └── RankButton (0,-341) — btn_blue SLICED + icon_ranking + "랭킹"
+└── CloseButton (-323,584) — btn_ingame_optionB + icon_pre
+```
+
+### Phase 3 구현 통계
+- API 호출: 42회
+- 성공률: 100%
+- 소요 시간: ~3분
+
+### Phase 4 검증
+- 29개 노드 확인
+- 모든 위치/크기 설계안과 일치
+- 토글 bg scale 조정 (152→86px에 맞춤)
+
+---
+
+## 관련 문서
+
+- [ref-layout.md](./ref-layout.md) — 시각적 추론 방법론 상세
+- [inference-settingpopup.md](./inference-settingpopup.md) — SettingPopup 추론 사례

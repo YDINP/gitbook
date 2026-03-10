@@ -1,0 +1,29 @@
+{
+  "name": "cocos-editor-server",
+  "version": "1.0.0",
+  "description": "MCP Server for Cocos Creator 2.x - Enables AI-powered editor control via Model Context Protocol",
+  "main": "main.js",
+  "scene-script": "scene-script.js",
+  "panel": {
+    "main": "panel/index.js",
+    "type": "dockable",
+    "title": "Cocos Editor Server",
+    "size": {
+      "min-width": 400,
+      "min-height": 300,
+      "width": 600,
+      "height": 500
+    }
+  },
+  "main-menu": {
+    "Cocos Editor Server/Open Panel": {
+      "message": "cocos-editor-server:open"
+    },
+    "Cocos Editor Server/Start Server": {
+      "message": "cocos-editor-server:start-server"
+    },
+    "Cocos Editor Server/Stop Server": {
+      "message": "cocos-editor-server:stop-server"
+    }
+  }
+}
