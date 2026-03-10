@@ -32,6 +32,17 @@
 
 ---
 
+## 🏗️ 프로젝트 아키텍처
+
+* [FriendsTileMatch — 타일 매칭 퍼즐 (CC 3.x)](projects/FriendsTileMatch-ARCH.md)
+* [FriendMatchPuzzle — Match-3 퍼즐 (CC 3.8.6)](projects/FriendMatchPuzzle-ARCH.md)
+* [Parkour — 2D 러너 (CC 2.4.13)](projects/Parkour-ARCH.md)
+* [Z-tangtang — 서바이벌 액션 (CC 3.6.1)](projects/Z-tangtang-ARCH.md)
+* [Kapi — 타워 디펜스 (CC 2.4.13)](projects/Kapi-ARCH.md)
+* [05JumpJump — 하이퍼캐주얼 점프 (CC 3.7.1)](projects/05JumpJump-ARCH.md)
+
+---
+
 ## 🔍 작업 기록
 
 * [SettingPopup UI 배치 추론](cocos-editor-server/docs/inference-settingpopup.md)
