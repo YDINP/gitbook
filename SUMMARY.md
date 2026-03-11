@@ -46,6 +46,7 @@
 ## 🤖 Claude 개발 메서드
 
 * [Autoloop — 자율 개선 루프 개발 기록](meta/AUTOLOOP-Dev-Record.md)
+* [Extended Thinking — 심층 추론 활용 가이드](meta/EXTENDED-THINKING-Guide.md)
 
 ---
 
