@@ -200,6 +200,37 @@ Ben_Claude_lab/
 
 ---
 
+### Iter 14~20 — 8.78 → 9.05 ✅
+
+**주제**: Dead Link 일괄 정리 + Adaptive Thinking 가이드 추가
+
+**변경 내용 (7개 이터레이션):**
+- SKILL-GUIDE.md: 카탈로그 누락 항목 추가 (web-test, hi5-setup, localization)
+- web-test.md: `agents/README.md` → `qa-agents/SKILL.md`, node -e → .js 파일 패턴
+- code-review.md: 참조 dead link 수정 (agents/README.md → qa-agents)
+- localization.md / hi5-setup.md / project-sync.md: PRD 파일 dead link → 실제 경로
+- **CLAUDE.md**: Adaptive Thinking 키워드 테이블 추가 (`think/megathink/ultrathink` + 토큰 예산)
+
+---
+
+### Iter 21~26 — 9.05 → 9.28 ✅
+
+**주제**: 연구 결과 반영 + l10n 커맨드 TaskMaster 완전 제거
+
+**변경 내용:**
+- cs.md: `megathink` 힌트 추가 (Visual Inference 섹션)
+- program.md: 완료 항목 체크, 신규 연구 주제 (프롬프트 캐싱, Agent Teams) 추가
+- autoloop.md: Step2 `ultrathink` + dead link 항목 추가; Step7 ralph-loop 연동 명확화
+- l10n-sync/bump/setup/migrate.md: TaskMaster Task #1, #3, #13, #14 dead link 제거
+- review.md: `agents/` → `/qa-agents` 경로 수정
+- setup.md: MCP 설정 단계 제거
+
+**연구 성과:**
+- Prompt Caching 완전 파악: 캐시 히트 시 90% 비용 절감, Claude Code는 자동 적용 (5분 TTL)
+- Gitbook 신규 페이지: `PROMPT-CACHING-Guide.md`
+
+---
+
 ## 인사이트
 
 ### 잘 작동한 것
@@ -216,9 +247,10 @@ Ben_Claude_lab/
 - 8.78 이후 점수 개선 폭이 줄어드는 수확 체감 현상 예상
 
 ### 다음 개선 방향
-- 프롬프트 캐싱 활용 전략 문서화 (연구 진행 중)
-- 채점 모델을 별도 에이전트로 분리 (자기 평가 편향 제거)
-- 점수 정체 시 더 큰 변경 시도하는 로직 추가 (8.8+ 이후)
+- [x] 프롬프트 캐싱 활용 전략 문서화 (PROMPT-CACHING-Guide.md)
+- [ ] 채점 모델을 별도 에이전트로 분리 (자기 평가 편향 제거)
+- [ ] 점수 정체 시 더 큰 변경 시도하는 로직 추가 (9.3+ 이후)
+- [ ] Agent Teams 활용 패턴 실험 (CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1)
 
 ---
 
