@@ -51,6 +51,7 @@
 * [Prompt Caching — 입력 토큰 90% 절감 전략](meta/PROMPT-CACHING-Guide.md)
 * [Agent Teams — 멀티에이전트 팀 활용 가이드](meta/AGENT-TEAMS-Guide.md)
 * [Claude Code Hooks — 라이프사이클 자동화 완전 가이드](meta/CLAUDE-CODE-HOOKS-Guide.md)
+* [CLAUDE.md 작성 모범 사례 — 2026 가이드](meta/CLAUDE-MD-Best-Practices.md)
 
 ---
 
