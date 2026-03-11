@@ -22,6 +22,7 @@
 | Hi5 PostMessage 오류 | `troubleshooting/TROUBLESHOOTING-Hi5-SDK-PostMessage.md` |
 | 치트 UI 추가 | `cocos/CHEATJS-Guide.md` |
 | 로컬라이징 적용 | `localization/README-Localization-Manager.md` |
+| 특정 프로젝트 아키텍처 파악 | `projects/{이름}-ARCH.md` |
 
 ---
 
@@ -78,6 +79,22 @@
 | 문서 | 설명 |
 |------|------|
 | [README-Localization-Manager.md](./localization/README-Localization-Manager.md) | CDN 기반 다국어 LocalizationManager 통합 가이드 |
+
+---
+
+## projects/ — 프로젝트 아키텍처 문서
+
+| 문서 | 설명 |
+|------|------|
+| [Kapi-ARCH.md](./projects/Kapi-ARCH.md) | 카피 (CC 2.4.13) 아키텍처 |
+| [Z-tangtang-ARCH.md](./projects/Z-tangtang-ARCH.md) | 탕탕 (CC 3.6.1) 아키텍처 |
+| [Parkour-ARCH.md](./projects/Parkour-ARCH.md) | 러너 (CC 2.4.13) 아키텍처 |
+| [FriendsTileMatch-ARCH.md](./projects/FriendsTileMatch-ARCH.md) | 타일매치 (CC 3.8.2) 아키텍처 |
+| [FriendMatchPuzzle-ARCH.md](./projects/FriendMatchPuzzle-ARCH.md) | 매치퍼즐 (CC 3.8.6) 아키텍처 |
+| [05JumpJump-ARCH.md](./projects/05JumpJump-ARCH.md) | 점프점프 (CC 3.7.1) 아키텍처 |
+| [FriendMaker-ARCH.md](./projects/FriendMaker-ARCH.md) | 봉봉 (CC 3.8.6) 아키텍처 — 수박게임 클론, Box2D 물리 합성 |
+| [Z-wuhuarou-ARCH.md](./projects/Z-wuhuarou-ARCH.md) | 밥도둑 (CC 2.4.13) 아키텍처 — 105스테이지 물리 퍼즐 |
+| [102-color-ball-sort-ARCH.md](./projects/102-color-ball-sort-ARCH.md) | 디저트 (CC 2.4.13) 아키텍처 — 445레벨 볼 소팅 퍼즐 |
 
 ---
 
