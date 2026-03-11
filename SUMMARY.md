@@ -20,6 +20,7 @@
 ### Cocos Editor Server
 * [개요 및 API 목록](cocos-editor-server/README.md)
 * [UI 배치 워크플로우 (Phase 0~4)](cocos-editor-server/docs/workflow-ui-reference.md)
+* [/cs 커맨드 고도화 연구 (browse\_assets · autoBorder · Widget)](cocos-editor-server/docs/cs-enhancement-research.md)
 
 ---
 
