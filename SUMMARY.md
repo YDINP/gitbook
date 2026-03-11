@@ -50,6 +50,7 @@
 * [Multi-Agent 오케스트레이션 패턴](meta/MULTI-AGENT-Patterns.md)
 * [Prompt Caching — 입력 토큰 90% 절감 전략](meta/PROMPT-CACHING-Guide.md)
 * [Agent Teams — 멀티에이전트 팀 활용 가이드](meta/AGENT-TEAMS-Guide.md)
+* [Claude Code Hooks — 라이프사이클 자동화 완전 가이드](meta/CLAUDE-CODE-HOOKS-Guide.md)
 
 ---
 

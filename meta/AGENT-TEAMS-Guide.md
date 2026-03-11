@@ -24,44 +24,47 @@ echo 'export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1' >> ~/.bashrc
 
 ## 핵심 개념
 
-### 오케스트레이터 (Orchestrator)
-- 전체 작업을 계획하고 서브에이전트에 위임
-- 결과를 수집하여 최종 응답 조합
-- 메인 Claude 인스턴스가 이 역할을 담당
+### 팀 리드 (Team Lead)
+- 팀을 생성하고 팀원을 spawn하는 세션
+- 공유 태스크 리스트 관리
+- 단, 팀원끼리 직접 메시지 가능 — 리드를 거치지 않아도 됨
 
-### 워커 에이전트 (Worker Agents)
-- 오케스트레이터가 spawn하는 독립 Claude 인스턴스
-- 각자 독립적인 컨텍스트에서 작업 실행
-- 결과만 오케스트레이터에 반환
+### 팀원 (Teammates)
+- 팀 리드가 spawn하는 독립 Claude Code 세션
+- 각자 독립적인 컨텍스트 창 보유
+- **서브에이전트와의 핵심 차이**: 팀원끼리 직접 통신 가능 (SendMessage 도구)
 
-### 격리 (Isolation)
-- 각 워커는 독립적인 컨텍스트 창 보유
-- 워커 간 직접 통신 없음 — 오케스트레이터를 통해서만 정보 공유
-- 워커 오류가 전체 작업을 중단시키지 않음
+### Subagents vs Agent Teams 비교
+
+| 항목 | Subagents | Agent Teams |
+|------|-----------|-------------|
+| 통신 방식 | 리드에게만 보고 | 팀원끼리 직접 메시지 |
+| 조율 방식 | 오케스트레이터가 모든 작업 관리 | 공유 태스크 리스트 + 자기조율 |
+| 사용자 접근 | 리드를 통해서만 | 어떤 팀원에게도 직접 질문 가능 |
+| 최적 상황 | 결과만 필요한 단순 작업 | 토론/협력이 필요한 복잡한 작업 |
+| 토큰 비용 | 낮음 (요약 후 반환) | 높음 (각 팀원이 별도 인스턴스) |
 
 ---
 
-## Claude Code Agent 도구
+## 내부 아키텍처 — 7가지 조율 도구
 
-Agent Teams 활성화 시 사용 가능한 내장 도구:
+Agent Teams는 내부적으로 7개 도구로 동작:
 
-```typescript
-// Agent 도구 파라미터
-{
-  subagent_type: "general-purpose" | "explore" | "sisyphus-junior" | ...,
-  prompt: string,          // 워커에게 전달할 작업 설명
-  description: string,     // 3-5단어 작업 요약
-  run_in_background?: boolean,  // 백그라운드 실행 여부
-  isolation?: "worktree"   // git worktree 격리 모드
-}
-```
+| 도구 | 역할 |
+|------|------|
+| `TeamCreate` | 팀 네임스페이스/설정 초기화 |
+| `TaskCreate` | 작업 단위 정의 |
+| `TaskUpdate` | 태스크 클레임 및 완료 처리 |
+| `TaskList` | 팀 전체 작업 현황 조회 |
+| `Task` (team_name 파라미터) | 팀원을 별도 Claude 세션으로 spawn |
+| `SendMessage` | 에이전트 간 직접 메시지 |
+| `TeamDelete` | 완료 후 팀 인프라 제거 |
 
-### 격리 모드: `isolation: "worktree"`
-```
-agent이 임시 git worktree에서 실행됨
-변경사항 없으면 자동 정리
-변경사항 있으면 worktree 경로 + 브랜치 반환
-```
+태스크 상태: `pending` → `in_progress` → `completed`
+
+팀 관련 파일 위치:
+- `~/.claude/teams/{team-name}/config.json`
+- `~/.claude/tasks/{team-name}/`
 
 ---
 
@@ -154,10 +157,13 @@ Opus   → 설계 결정, 복잡한 추론 (최고 성능)
 
 ## 주의사항
 
-1. **동일 파일 동시 수정 금지**: 두 워커가 같은 파일을 수정하면 충돌 발생
-2. **워커 오류 처리**: 오케스트레이터가 워커 실패를 감지하고 재시도 또는 스킵
-3. **토큰 누적**: 각 워커가 독립적으로 토큰 소비 → 총 비용 증가 가능
-4. **컨텍스트 공유 불가**: 워커는 오케스트레이터의 전체 컨텍스트를 상속받지 않음 — 필요한 정보는 prompt에 명시
+1. **동일 파일 동시 수정 금지**: 두 팀원이 같은 파일을 수정하면 충돌 발생
+2. **세션 재개 불가**: `/resume`, `/rewind`가 in-process 팀원을 복원하지 못함
+3. **팀 1개 제한**: 세션당 팀 1개만 관리 가능, 리더십 이전 불가
+4. **중첩 팀 불가**: 팀원이 자체 팀을 생성할 수 없음 (리드만 팀 관리)
+5. **토큰 비용**: 3명 팀 = 단일 세션 대비 약 3-4배 토큰 소비
+6. **컨텍스트 공유 불가**: 팀원은 리드의 전체 컨텍스트를 상속받지 않음 — 필요한 정보는 spawn prompt에 명시
+7. **⚠️ Windows 사용자**: Split-pane 모드 미지원 (VS Code, Windows Terminal, Ghostty 모두 미지원). **In-process 모드만 사용 가능.**
 
 ---
 
