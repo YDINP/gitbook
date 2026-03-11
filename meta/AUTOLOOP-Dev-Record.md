@@ -101,22 +101,124 @@ Ben_Claude_lab/
 
 ---
 
+### Iter 4 — 7.65 → 8.05 ✅
+
+**주제**: Dead link 제거 + code-review 섹션 최신화
+
+**변경 파일:**
+- `local-server.md`: Puppeteer 관련 dead link 제거 (이미 playwright로 대체됨)
+- `code-review.md`: 섹션명 최신화 (Puppeteer 섹션 → playwright 기반)
+
+**이유**: 사용하지 않는 도구의 링크가 남아 있으면 Claude가 존재하지 않는 경로를 시도함.
+
+---
+
+### Iter 5 — 8.05 → 8.30 ✅
+
+**주제**: TaskMaster 완료 섹션 제거 + l10n 중복 테이블 제거
+
+**변경 파일:**
+- `localization.md`: TaskMaster 완료 항목 섹션 제거 (-400단어)
+- `l10n-sync.md`: 프로젝트 테이블 중복 제거 → `localization.md` 참조로 대체 (-87단어)
+
+**이유**: 완료된 태스크 목록은 스킬 파일에 불필요. 프로젝트 테이블 중복은 정보 분산 야기.
+
+---
+
+### Iter 6 — 8.30 → 8.40 ✅
+
+**주제**: adb alias 명확화 + /build 커맨드 카탈로그 등록
+
+**변경 파일:**
+- `SKILL-GUIDE.md`: adb/adb-android 두 스킬의 차이를 명확화. `/build` 커맨드를 카탈로그에 추가 (이전 빌드 스킬은 DEPRECATED로 표기).
+
+---
+
+### Iter 7 — 8.40 → 8.48 ✅
+
+**주제**: playwright 설치 안내 + Windows 주의사항
+
+**변경 파일:**
+- `web-test.md`: playwright 최초 설치 명령어 추가, Windows 경로 구분자 주의사항 명시
+
+---
+
+### Iter 8 — 8.48 → 8.58 ✅
+
+**주제**: code-review 역할 중복 제거 + 판단 기준 추가
+
+**변경 파일:**
+- `code-review.md`: 역할 중복 설명 제거. 수동/에이전트 실행 판단 기준 추가. 출력 형식 섹션 추가.
+
+**이유**: 코드 리뷰 스킬에 "언제 에이전트를 쓰는가"에 대한 기준이 없어 매번 재판단이 필요했음.
+
+---
+
+### Iter 9 — 8.58 → 8.65 ✅
+
+**주제**: 컨텍스트 관리 트리거 정량화
+
+**변경 파일:**
+- `CLAUDE.md`: 컨텍스트 관리 테이블에 정량 기준 추가 (메시지 20회↑, 파일 5개↑ 수정 시 등)
+
+**이유**: "대화가 길어짐" 같은 정성적 기준보다 숫자 기준이 실행 가능한 지침이 됨.
+
+---
+
+### Iter 10 — 8.65 → 8.72 ✅
+
+**주제**: l10n-update CDN 퍼지 중복 제거
+
+**변경 파일:**
+- `l10n-update.md`: CDN 퍼지 curl 명령어 제거 → `localization.md` 섹션 참조로 대체
+
+---
+
+### Iter 11~12 — Gitbook 연구 기록
+
+**주제**: Extended Thinking + Multi-Agent 패턴 연구 결과 Gitbook 반영
+
+**Gitbook 추가/업데이트:**
+- `meta/EXTENDED-THINKING-Guide.md`: Claude 4.x의 Adaptive Thinking API 정확화
+  - `budget_tokens` (deprecated) → `effort` 레벨 (`low/medium/high/max`)
+  - Claude Code 키워드: `think`(4K) / `megathink`(10K) / `ultrathink`(32K)
+  - Tab 키로 thinking 모드 토글 가능
+  - Claude 4.x는 thinking 요약본만 반환하지만 전체 토큰 청구
+- `meta/MULTI-AGENT-Patterns.md` (신규): 5가지 멀티에이전트 패턴 카탈로그
+  - Fan-Out/Fan-In, Orchestrator-Worker, Research-Then-Implement, Evaluator-Optimizer, Specialist Routing
+  - 실측 데이터: 3~5 병렬 에이전트 → 90.2% 성능 향상, 90% 시간 단축
+  - 비용: 단일 채팅 대비 최대 15x 토큰 소비 → 복잡한 작업에만 적용
+
+---
+
+### Iter 13 — 8.72 → 8.78 ✅
+
+**주제**: autoloop Judge 채점에 ultrathink 힌트 추가
+
+**변경 파일:**
+- `autoloop.md`: "4. Opus 4.6 Judge 채점" 단계에 `ultrathink:` 키워드 힌트 추가 → 복잡한 다기준 채점에 심층 추론 유도
+
+---
+
 ## 인사이트
 
 ### 잘 작동한 것
 - **구체적 피트니스 함수**: 5개 항목 가중 채점으로 "더 나은지"를 수치화
 - **안전 격리**: lab 폴더 분리로 원본 보호
 - **작은 이터레이션**: 이터레이션당 3파일 이내 → 변경 추적 용이
+- **병렬 연구 + 즉시 적용**: 연구 에이전트 백그라운드 실행 중 다른 개선 진행 → 연구 결과를 기다리지 않음
+- **ultrathink 힌트**: Judge 단계에 `ultrathink:` 추가로 채점 품질 향상 기대
 
 ### 한계
 - LLM 자체가 judge이므로 자기 작업에 관대해질 수 있음
 - "토큰 효율" 지표는 단순 단어 수로는 완전히 측정 불가
 - 실제 Claude Code 동작 개선 여부는 실사용 없이 검증 불가
+- 8.78 이후 점수 개선 폭이 줄어드는 수확 체감 현상 예상
 
 ### 다음 개선 방향
-- 백그라운드 분석 에이전트 결과 반영 (l10n 중복, web-test 품질)
+- 프롬프트 캐싱 활용 전략 문서화 (연구 진행 중)
 - 채점 모델을 별도 에이전트로 분리 (자기 평가 편향 제거)
-- 점수 정체 시 더 큰 변경 시도하는 로직 추가
+- 점수 정체 시 더 큰 변경 시도하는 로직 추가 (8.8+ 이후)
 
 ---
 
