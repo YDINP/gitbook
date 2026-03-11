@@ -188,35 +188,54 @@ Widget 노드의 위치/크기 변경 시:
 | `undo` | cs.md Phase 3 | 잘못된 속성 즉시 복구 (기존 복구 루프 없음 → 해결) |
 | `find_nodes` | cs-parallel.md Agent E | 패턴으로 복수 UUID 단일 호출 확보 |
 
-### 향후 통합 후보 (중간 가치)
+### Phase E — 추가 후보 API 전면 통합 (후속 연구)
 
-| API | 활용 시나리오 |
-|-----|-------------|
-| `duplicate_node` | 반복 구조 버튼/토글: 하나 생성 후 복제 → API 호출 수 절감 |
-| `get_scene_hierarchy` | `get_all_nodes` + 컴포넌트 정보를 단일 호출로 대체 |
-| `create_prefab` | FULL/CREATE 모드 완료 후 노드 트리 즉시 프리팹화 |
-| `start_preview` | Phase 4 후 런타임 렌더링 시각 확인 (애니메이션 포함) |
+"향후 통합 후보"로 남겼던 4개 API를 모두 통합 완료.
+
+| API | 통합 위치 | 효과 |
+|-----|----------|------|
+| `duplicate_node` | cs.md Phase 3, cs-parallel.md Phase 3 | 반복 구조 노드 복제 → API 호출 수 대폭 절감 |
+| `get_scene_hierarchy` | cs.md Step 2, cs-parallel.md Phase 0 | 컴포넌트 포함 노드 트리 단일 호출 |
+| `create_prefab` | cs.md Step 4, cs-parallel.md Phase 4-C | FULL/CREATE 완료 후 즉시 프리팹 저장 |
+| `start_preview` | cs.md Step 4 | 런타임 시각 검증 (애니메이션·파티클) |
+
+### workflow-ui-reference.md 전면 업데이트
+
+구식 JSON-RPC 패턴을 REST curl로 전환 + 모든 개선사항 반영:
+
+| 섹션 | 변경 내용 |
+|------|---------|
+| Phase 0 | JSON-RPC → curl REST, get_project_settings 자동 읽기 추가 |
+| Phase 1-4 | 에셋 점수제 4기준 → 6기준, 판정 기준 7점↑/5~6점/4점↓ |
+| Phase 1-5 | grep .meta → browse_assets API |
+| Phase 3 | MCP JSON-RPC → REST API 패턴, 구현 순서 10→11단계 (duplicate_node, get_components, get_component_info, autoBorder, undo) |
+| Phase 4 | 오차 기준 4단계, create_prefab, start_preview, 체크리스트 3개 추가 |
 
 ---
 
 ## 결론 및 아키텍처 요약
 
-### /cs 커맨드 개선된 흐름
+### /cs 커맨드 최종 흐름
 
 ```
-Step 1:   서버 연결 확인 (3000~3010 포트 스캔)
+Step 1:   서버 연결 + get_project_settings(해상도) + get_project_info(이름)
 Step 1.5: 에셋 인벤토리 캐시 확인
            ├── HIT  → Step 3으로 바로 이동
            └── MISS → Step 2.5에서 browse_assets API 호출
-Step 2:   요청 파싱 (레퍼런스 이미지, 대상 노드, 작업 유형)
+Step 2:   씬 컨텍스트 (get_scene_hierarchy) + 요청 파싱
 Step 2.5: 에셋 인벤토리 수집 (browse_assets + 캐시 저장)
 Step 3:   6기준 점수제로 에셋 매칭
            → 7점↑ 확정 / 5-6점 후보 제시 / 4점↓ 재탐색
-Step 4:   구현 (set_node_transform으로 일괄 좌표 적용)
-           → Widget 노드: flag 확인 후 margin 또는 flag 해제 처리
+Step 4:   구현
+           → Widget 노드: get_component_info → flag 확인 → margin 또는 flag 해제
+           → set_node_transform 일괄 좌표 / duplicate_node 반복 구조
            → SLICED: autoBorder:true (기본값)
+           → 실수 시: undo
 Step 5:   검증 (analyze_reference_layout + pixel-diff.js)
            → ±5px PASS / ±6~15px 자동보정 / ±16~30px 재추론 / ±30px+ 사용자 확인
+Step 6:   마무리 (FULL/CREATE)
+           → create_prefab → 프리팹 저장
+           → start_preview → 런타임 시각 확인 → stop_preview
 ```
 
 ### 핵심 API 요약
