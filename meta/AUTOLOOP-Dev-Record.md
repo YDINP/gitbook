@@ -262,6 +262,20 @@ Ben_Claude_lab/
 
 ---
 
+### Iter 36~39 — 9.66 → 9.77 ✅
+
+**주제**: 카탈로그 완성도 + 실행 가능성 수정
+
+**변경 내용:**
+- `SKILL-GUIDE.md`: 스킬 호출 섹션 정리 — `/troubleshoot` 중복 제거 + `/web-test`, `/review`, `/sync` 추가
+- `qa-agents/SKILL.md`: `ResourceCheck`, `DesignCheck` 에이전트 추가 (package.json 스크립트와 일치)
+- `cs.md`: Step1 포트 순서 수정 (`3001 || 3000` → `3000 || 3001`, 기본 포트 우선)
+- `cs-parallel.md`: Phase0 포트 수정 — `3001` 단일 → `3000 || 3001` (cs.md와 일관성)
+
+**이유**: 기본 포트 3000이 명시됐는데 헬스체크는 3001을 먼저 시도하는 역전 현상 수정. qa-agents 실제 스크립트와 문서 불일치 해소.
+
+---
+
 ## 인사이트
 
 ### 잘 작동한 것
