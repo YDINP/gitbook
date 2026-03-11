@@ -292,6 +292,24 @@ Ben_Claude_lab/
 
 ---
 
+### Iter 45~48 — 9.87 → 9.93 ✅
+
+**주제**: qa-agents 완성도 + UI 작업 명확화 + 보일러플레이트 제거 + Agent Teams 연구
+
+**변경 내용:**
+- `code-review.md`: 판단 기준 테이블에 `/qa-agents resource-check`, `design-check` 등 전체 옵션 추가 (6개로 확장)
+- `CLAUDE.md`: Cocos UI 작업 섹션에 `/cs` vs `/cs-parallel` 선택 기준 명시 (5개↓→/cs, 6개↑→/cs-parallel)
+- `web-test.md` (skills): 로컬라이징/UI/데이터 테스트 섹션 `node -e` 인라인 보일러플레이트 제거 (-30 lines) → `.js` 파일 핵심 라인만 표시
+- `AGENT-TEAMS-Guide.md` (Gitbook 신규): Claude Code 멀티에이전트 팀 활용 완전 가이드 — 활성화, Fan-Out, Orchestrator-Worker, Specialist Routing, 비용 최적화
+
+**이유**: code-review.md가 qa-agents의 일부 옵션만 나열해 사용자가 전체 기능을 모르는 문제 해소. web-test.md 상단 경고("node -e는 Windows Git Bash에서 불안정")와 하단 예시(node -e 사용)의 모순 해결.
+
+**총 이터레이션 현황 (48회):**
+- 점수: 6.10 → 9.93 (+3.83p)
+- 주요 개선 패턴: Dead link → 경로 일관성 → 포트 일관성 → 카탈로그 완성도 → 설명 간소화 → 불일치 해소 → 연구 반영
+
+---
+
 ## 인사이트
 
 ### 잘 작동한 것
@@ -311,7 +329,7 @@ Ben_Claude_lab/
 - [x] 프롬프트 캐싱 활용 전략 문서화 (PROMPT-CACHING-Guide.md)
 - [ ] 채점 모델을 별도 에이전트로 분리 (자기 평가 편향 제거)
 - [ ] 점수 정체 시 더 큰 변경 시도하는 로직 추가 (9.3+ 이후)
-- [ ] Agent Teams 활용 패턴 실험 (CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1)
+- [x] Agent Teams 활용 패턴 실험 — iter 48 (AGENT-TEAMS-Guide.md 생성)
 
 ---
 
