@@ -38,21 +38,24 @@ Phase 4: 최종 검증 (Verification Agent)
 
 ---
 
-## Phase 0: 레퍼런스 오버레이 배치
+## Phase 0: 레퍼런스 노드 배치 + 좌표 기준 확립
 
-**목적**: 사용자가 에디터에서 실시간으로 결과를 레퍼런스와 비교할 수 있도록 함.
+**목적**: 레퍼런스 이미지를 씬에 배치하고, 그 노드의 실측값으로 좌표 기준을 확립한다.
+
+> ⭐ **핵심 원칙**: 좌표 기준은 에셋 폴더 이미지의 픽셀 크기로 scale_factor를 추정하지 않는다.
+> 씬에 배치된 레퍼런스 노드의 `position`, `contentSize`를 API로 실측하여 사용한다.
 
 ### 절차
 
-1. 레퍼런스 이미지의 Texture UUID 확인
+1. 레퍼런스 이미지 Texture UUID 확인
    ```bash
-   # .meta 파일에서 UUID 추출
-   grep '"uuid"' <image>.png.meta
+   curl -X POST http://localhost:{PORT}/api/project/browse_assets \
+     -d '{"folder":"db://assets","type":"texture"}'
    ```
 
-2. `scene_place_reference_image` 호출
+2. 레퍼런스 노드 배치 (프로젝트 designResolution 크기로)
    ```bash
-   # designResolution 자동 읽기
+   # designResolution 확인
    curl -s http://localhost:{PORT}/api/project/get_project_settings \
      | grep -o '"designResolution":[^}]*}'
 
@@ -61,11 +64,26 @@ Phase 4: 최종 검증 (Verification Agent)
      -H "Content-Type: application/json" \
      -d '{"textureUuid":"<texture-uuid>","width":750,"height":1334,"opacity":128,"name":"__REF_OVERLAY__"}'
    ```
-   - `width`/`height`: 프로젝트 디자인 해상도에 맞춤
-   - `opacity`: 128 (50%) 권장 — 너무 투명하면 비교 어려움
+   - `width`/`height`: **반드시 designResolution과 동일하게** (750×1334 등)
+   - `opacity`: 128 (50%) 권장
    - zIndex -9999로 자동 배치됨
 
-3. 사용자에게 오버레이 확인 요청
+3. **레퍼런스 노드 실측 — 좌표 기준 확립**
+   ```bash
+   curl -s http://localhost:{PORT}/api/node/find_node_by_name \
+     -d '{"name":"__REF_OVERLAY__"}'
+   curl -s http://localhost:{PORT}/api/node/get_node_info \
+     -d '{"uuid":"<refNodeUuid>"}'
+   ```
+   추출 항목:
+   | 변수 | 필드 | 의미 |
+   |------|------|------|
+   | `cx` | `position.x` | 레퍼런스 노드 중심 x |
+   | `cy` | `position.y` | 레퍼런스 노드 중심 y |
+   | `ref_w` | `contentSize.width` | 씬에서의 실제 너비 |
+   | `ref_h` | `contentSize.height` | 씬에서의 실제 높이 |
+
+4. 사용자에게 오버레이 확인 요청
 
 ### 완료 후 정리
 
@@ -79,24 +97,47 @@ Phase 4: 최종 검증 (Verification Agent)
 
 ### 입력
 
-- 레퍼런스 이미지 (Read 도구로 시각 확인)
+- 레퍼런스 이미지 (Read 도구로 시각 확인 — UI 요소 식별용)
+- Phase 0에서 확보한 레퍼런스 노드 실측값 (cx, cy, ref_w, ref_h)
 - 프로젝트 에셋 이미지들 (후보 에셋 시각 확인)
-- 디자인 해상도 정보
 
 ### 추론 절차
 
-#### 1-1. Scale Factor 계산
+#### 1-1. Scale 계산 (씬 노드 실측 기준)
 
 ```
-scale_factor = designResolution.width / referenceImage.width
+img_pixel_w = 레퍼런스 이미지 파일 픽셀 너비  (Read로 확인)
+img_pixel_h = 레퍼런스 이미지 파일 픽셀 높이
+
+scale_x = ref_w / img_pixel_w   (1:1 배치 시 ≈ 1.0)
+scale_y = ref_h / img_pixel_h
+
+※ designResolution / imagePixelSize 로 추정하지 않음 — 씬 노드 실측값 사용
 ```
 
-#### 1-2. 좌표 변환 공식
+#### 1-2. 좌표 변환 공식 (씬 레퍼런스 노드 기반)
 
 ```
-image_center = (ref_width / 2, ref_height / 2)
-design_x = (image_x - center_x) × scale_factor
-design_y = (center_y - image_y) × scale_factor   // Y축 반전 (Cocos: 위가 +)
+이미지 픽셀 (px, py) [좌상단 = (0,0)] → Cocos 좌표:
+  design_x = cx + (px - img_pixel_w/2) × scale_x
+  design_y = cy + (img_pixel_h/2 - py) × scale_y
+
+1:1 배치 + 레퍼런스 노드가 (0,0)인 경우 단순화:
+  design_x = px - img_pixel_w/2
+  design_y = img_pixel_h/2 - py
+```
+
+#### 1-2b. 구현 전 추가 확인 (큰 오차 방지)
+
+```bash
+# 부모 노드 실제 position 확인 (자식 좌표 = 부모 기준 local)
+curl -s http://localhost:{PORT}/api/node/get_node_info \
+  -d '{"uuid":"<parentUuid>"}' | grep -o '"position":{[^}]*}'
+
+# 대상 노드 앵커포인트 확인 (≠ 0.5 이면 position 보정 필요)
+curl -s http://localhost:{PORT}/api/node/get_node_info \
+  -d '{"uuid":"<targetUuid>"}' | grep -o '"anchorPoint":{[^}]*}'
+# anchorX/Y ≠ 0.5: set_x = design_x + w*(0.5-anchorX), set_y = design_y + h*(0.5-anchorY)
 ```
 
 #### 1-3. UI 요소 식별
