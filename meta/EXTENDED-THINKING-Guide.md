@@ -1,17 +1,90 @@
-# Extended Thinking — Claude 4.x 심층 추론 활용 가이드
+# Extended Thinking (Adaptive Thinking) — Claude 4.x 심층 추론 활용 가이드
 
-> 기록일: 2026-03-11 | Ben_Claude_lab 연구 결과
+> 기록일: 2026-03-11 | Ben_Claude_lab 연구 결과 (loop-11 업데이트)
 
 ---
 
 ## 개념
 
-Extended Thinking은 Claude 4.x(Opus/Sonnet)가 응답 전에 내부적으로 "생각하는" 단계를 갖는 기능이다.
-일반 응답과 달리, 모델이 여러 접근법을 탐색하고 자가 검증하는 과정을 거친다.
+Claude 4.x는 응답 전에 내부적으로 "생각하는" 단계(**Adaptive Thinking**)를 갖는다.
+Claude 3.x의 "Extended Thinking(`budget_tokens`)"에서 명칭과 API가 변경되었다.
 
 ```
 일반 응답: 입력 → [즉시] 출력
-Extended: 입력 → <thinking>...</thinking> [심층 추론] → 출력
+Adaptive:  입력 → [thinking 단계] → 출력
+```
+
+> ⚠️ Claude 4.x에서는 `budget_tokens` 파라미터가 **deprecated** 됨. `effort` 레벨로 대체.
+
+---
+
+## Claude Code에서 트리거하는 방법
+
+Claude Code CLI에서는 **키워드**로 thinking 깊이를 조절할 수 있다:
+
+| 키워드 | 토큰 예산 | 사용 시점 |
+|--------|----------|----------|
+| `think` | ~4,000 | 간단한 추론, 설계 검토 |
+| `megathink` | ~10,000 | 중간 복잡도 문제 |
+| `ultrathink` | ~32,000 (최대) | 복잡한 아키텍처, 다단계 추론 |
+
+또한 **Tab 키**로 thinking 모드를 토글할 수 있다 (Claude Code UI).
+
+### 효과적인 트리거 패턴
+
+```markdown
+# 명시적 키워드 사용
+"ultrathink: 이 아키텍처 결정의 트레이드오프를 분석해줘"
+"megathink를 사용해서 에이전트 의존성 그래프를 설계해줘"
+
+# 복잡한 조건 제시
+"다음 3가지 조건을 모두 만족하는 해결책을 찾아줘:
+1. 토큰 효율 최대화
+2. 병렬 실행 안전성 보장
+3. 하위 호환성 유지"
+```
+
+---
+
+## API/SDK 활성화 (Claude API 직접 사용 시)
+
+### Claude 4.x (현재 권장)
+
+```python
+# Anthropic SDK — Claude 4.x Adaptive Thinking
+response = client.messages.create(
+    model="claude-opus-4-6",
+    max_tokens=16000,
+    thinking={
+        "type": "adaptive"  # Claude 4.x: budget_tokens 대신 adaptive
+    },
+    output_config={
+        "effort": "high"    # "low" | "medium" | "high" | "max"
+    },
+    messages=[{"role": "user", "content": "..."}]
+)
+
+# thinking 블록 접근 (Claude 4는 요약본 반환)
+for block in response.content:
+    if block.type == "thinking":
+        print(block.thinking)  # thinking 요약 (전체 토큰은 내부 소비)
+    elif block.type == "text":
+        print(block.text)
+```
+
+### Claude 3.x (구버전 참조용)
+
+```python
+# Claude 3.x — budget_tokens 방식 (deprecated)
+response = client.messages.create(
+    model="claude-opus-4-5",
+    max_tokens=16000,
+    thinking={
+        "type": "enabled",
+        "budget_tokens": 10000  # Claude 3.x 전용
+    },
+    messages=[{"role": "user", "content": "..."}]
+)
 ```
 
 ---
@@ -25,7 +98,7 @@ Extended: 입력 → <thinking>...</thinking> [심층 추론] → 출력
 | **복잡한 UI 좌표 추론** | 여러 패턴 동시 고려 필요 | ref-layout.md Step 4.5 — 간격 리듬 분석 |
 | **에이전트 오케스트레이션 설계** | 의존성 그래프 추론 | cs-parallel.md 그룹 분리 판단 |
 | **코드 버그 원인 분석** | 여러 가설 순차 검증 | code-review 복잡한 비동기 버그 |
-| **상충 요구사항 해결** | 트레이드오프 분석 | 빌드 설정 최적화 |
+| **상충 요구사항 해결** | 트레이드오프 분석 | autoloop 개선 방향 결정 |
 | **수학/알고리즘 문제** | 단계별 검증 필요 | 게임 밸런스 계산 |
 
 ### ❌ 비효율적인 경우
@@ -37,90 +110,53 @@ Extended: 입력 → <thinking>...</thinking> [심층 추론] → 출력
 
 ---
 
-## Claude Code에서 트리거 방법
-
-Claude Code 자체에서 extended thinking을 직접 제어하는 API는 없지만, **프롬프트 구조**로 유도할 수 있다:
-
-```markdown
-# 효과적인 트리거 패턴
-
-## 명시적 요청
-"이 문제를 단계별로 깊이 생각해서 해결해줘"
-"여러 접근법을 비교해서 최선을 선택해줘"
-"확신이 없는 부분은 대안도 제시해줘"
-
-## 구조화된 복잡 태스크
-"다음 3가지 조건을 모두 만족하는 해결책을 찾아줘:
-1. ...
-2. ...
-3. ..."
-```
-
----
-
-## API/SDK 활성화 (Claude API 직접 사용 시)
-
-```python
-# Anthropic SDK
-response = client.messages.create(
-    model="claude-opus-4-6",
-    max_tokens=16000,
-    thinking={
-        "type": "enabled",
-        "budget_tokens": 10000  # 최대 thinking 토큰
-    },
-    messages=[{"role": "user", "content": "..."}]
-)
-
-# thinking 블록 접근
-for block in response.content:
-    if block.type == "thinking":
-        print(block.thinking)  # 내부 추론 과정
-    elif block.type == "text":
-        print(block.text)      # 최종 응답
-```
-
----
-
 ## 토큰 비용 고려사항
 
-| 항목 | 일반 | Extended Thinking |
+| 항목 | 일반 | Adaptive Thinking |
 |------|------|------------------|
 | 입력 토큰 | 동일 | 동일 |
-| 출력 토큰 | 응답만 | 응답 + thinking (별도 청구) |
-| 비용 배수 | 1x | 1.5x ~ 3x (thinking 길이에 따라) |
-| 응답 품질 | 기본 | 복잡 태스크에서 유의미한 향상 |
+| 출력 토큰 | 응답만 | 응답 (thinking은 내부 소비) |
+| 청구 방식 | 출력 토큰 | thinking 생성 토큰 전체 청구 (요약본만 반환해도) |
+| 비용 배수 | 1x | 1.5x ~ 3x (effort 레벨에 따라) |
+| 평균 TTFT | 빠름 | Opus 4.6 기준 ~21.56초 |
 
-**권장:** `budget_tokens`를 태스크 복잡도에 맞게 제한 (기본 10,000, 복잡한 경우 최대 32,000)
+> ⚠️ Claude 4.x에서 thinking 블록은 **요약본만 반환**되지만, 내부적으로 생성된 **전체 토큰이 청구**된다.
 
 ---
 
 ## Ben_Claude 적용 포인트
 
-### cs.md / ref-layout.md에서
-복잡한 UI 추론 시 에이전트 프롬프트에 추가:
+### autoloop.md에서 (복잡한 채점 단계)
+
 ```
-이 UI 요소의 좌표와 크기를 추론할 때:
-1. 먼저 레이아웃 패턴을 파악하고
+# Opus 4.6 Judge 채점 시
+ultrathink: 변경 전/후를 비교하여 각 기준(토큰효율/명확성/일관성/컨텍스트관리/에이전트라우팅)을
+다단계로 검토하고 최종 점수를 산출해줘.
+```
+
+### cs.md / ref-layout.md에서 (UI 추론)
+
+```
+megathink를 사용해서:
+1. 레이아웃 패턴을 파악하고
 2. 여러 가능한 해석을 검토한 후
 3. 가장 합리적인 값을 선택해서 이유와 함께 설명해줘
 ```
 
 ### oracle/judge 역할에서
-채점/검증 시 복잡한 판단이 필요하면:
+
 ```
-각 변경사항을 평가할 때, 즉각적인 판단보다
-실제 Claude 사용 시나리오에서 어떤 영향을 줄지
-단계적으로 생각해서 점수를 매겨줘
+ultrathink로 각 변경사항을 평가할 때, 실제 Claude 사용 시나리오에서
+어떤 영향을 줄지 단계적으로 검토해서 점수를 매겨줘
 ```
 
 ---
 
 ## 한계
 
-- Claude Code CLI에서는 `thinking` 파라미터를 직접 설정할 수 없음
-- 프롬프트로 유도하는 것과 API 설정의 효과는 다를 수 있음
-- Haiku에서는 extended thinking 지원 안 됨 (Opus/Sonnet만)
+- Claude Code CLI에서 `effort` 파라미터를 직접 설정할 수 없음 → 키워드(`think`/`megathink`/`ultrathink`)로 유도
+- thinking 블록 요약본만 반환 → 전체 추론 과정 열람 불가 (Claude 4.x)
+- Haiku에서는 Adaptive Thinking 지원 안 됨 (Opus/Sonnet만)
 - Streaming과 함께 사용 시 thinking 블록이 먼저 스트리밍됨
 
 ---
@@ -129,3 +165,4 @@ for block in response.content:
 
 - [Anthropic Extended Thinking 공식 문서](https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking)
 - Ben_Claude_lab loop-log.md — 연구 이터레이션 기록
+- Ben_Claude_lab/meta/MULTI-AGENT-Patterns.md — 멀티에이전트 패턴 연구
