@@ -248,6 +248,20 @@ Ben_Claude_lab/
 
 ---
 
+### Iter 31~35 — 9.40 → 9.66 ✅
+
+**주제**: 프롬프트 캐싱 적용 + Git Bash 경로 일괄 수정
+
+**변경 내용:**
+- `CLAUDE.md`: 프롬프트 캐싱 섹션 추가 (5분 TTL, 90% 절감, cache_control 권장)
+- `program.md`: 프롬프트 캐싱 목표 완료 표시 (`[x]`)
+- `SKILL-GUIDE.md`: 디렉토리 구조에서 존재하지 않는 `build.md` DEPRECATED 항목 제거
+- l10n 커맨드 5개 (`l10n-bump/setup/migrate/update/sync.md`) + `localization.md`: bash 코드 블록 내 Windows 백슬래시 경로 → Git Bash 전방슬래시로 수정
+
+**이유**: bash 코드 블록 내 `C:\...` 경로는 Git Bash에서 실행 불가. 7개 파일에 걸쳐 동일 패턴 발견 → 일괄 수정으로 실행 가능성 향상.
+
+---
+
 ## 인사이트
 
 ### 잘 작동한 것
