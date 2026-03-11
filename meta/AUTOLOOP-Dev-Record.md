@@ -231,6 +231,23 @@ Ben_Claude_lab/
 
 ---
 
+### Iter 27~30 — 9.28 → 9.40 ✅
+
+**주제**: 참조 정확성 최종 점검 + 컨텍스트 관리 완성
+
+**변경 내용:**
+- cs-parallel.md: Phase1 에이전트 프롬프트에 `megathink` 힌트 추가
+- cs-parallel.md: 참조 테이블 `CLAUDE.md`(부정확) → `cs.md`(실제 핵심 규칙 위치) 수정
+- ref-layout.md: 연계 문서 상단 참조도 같은 방식으로 수정
+- **CLAUDE.md**: 컨텍스트 관리 테이블에 "새 세션 시작 → handoff.md 먼저 확인" 행 추가
+
+**총 이터레이션 현황:**
+- 1~30 완료, 점수: 6.10 → 9.40 (+3.30p)
+- Dead link 제거: ~15개 파일 정리
+- 신규 Claude 고도화 기능 문서: Adaptive Thinking, Prompt Caching, Multi-Agent Patterns
+
+---
+
 ## 인사이트
 
 ### 잘 작동한 것
