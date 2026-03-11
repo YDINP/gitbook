@@ -15,6 +15,7 @@
 3. `autoBorder:true`로 9-slice border 서버 자동 추론
 4. `analyze_reference_layout`으로 Phase 4 구조 기반 검증 추가
 5. Widget 컴포넌트 좌표 처리 규칙 정립
+6. **씬 레퍼런스 노드 기반 좌표 시스템** — 핵심 아키텍처 변경 (scale_factor 추정 폐기)
 
 ---
 
