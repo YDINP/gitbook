@@ -43,6 +43,12 @@
 
 ---
 
+## 🤖 Claude 개발 메서드
+
+* [Autoloop — 자율 개선 루프 개발 기록](meta/AUTOLOOP-Dev-Record.md)
+
+---
+
 ## 🔍 작업 기록
 
 * [SettingPopup UI 배치 추론](cocos-editor-server/docs/inference-settingpopup.md)
