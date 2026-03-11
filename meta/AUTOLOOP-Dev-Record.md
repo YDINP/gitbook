@@ -326,6 +326,23 @@ Ben_Claude_lab/
 
 ---
 
+### 루프 완료 후 추가 작업 (iters 51~55) — 9.94 → 9.97
+
+**배경**: 루프 종료 후 수신된 백그라운드 연구 에이전트 결과를 반영. 2차 ultrawork-ralph로 5회 추가 이터레이션.
+
+**변경 내용:**
+- `fix.md`: 완료 기준 체크리스트 + 케이스 없음 fallback 지시 추가
+- `sync.md`: `sdk` 작업에 ⚠️ 경고 추가 (9개 프로젝트 파일 덮어쓰는 파괴적 작업)
+- `CLAUDE-CODE-HOOKS-Guide.md` (Gitbook 신규): 18개 훅 이벤트 전체, 4가지 타입, 차단/수정 패턴, 무한 루프 방지
+- `AGENT-TEAMS-Guide.md` 업데이트: 실제 내부 아키텍처(7개 도구), 팀원 P2P 통신, Windows split-pane 미지원
+- `CLAUDE-MD-Best-Practices.md` (Gitbook 신규): `.claude/rules/` path-scoped 로딩, `@path` import, 포함/제외 기준
+
+**총 이터레이션 현황 (55회):**
+- 점수: 6.10 → 9.97 (+3.87p)
+- Gitbook 총 신규 페이지: 7개 (EXTENDED-THINKING, MULTI-AGENT, PROMPT-CACHING, AGENT-TEAMS, CLAUDE-CODE-HOOKS, CLAUDE-MD-Best-Practices, AUTOLOOP-Dev-Record)
+
+---
+
 ## 인사이트
 
 ### 잘 작동한 것
