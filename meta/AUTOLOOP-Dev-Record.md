@@ -276,6 +276,22 @@ Ben_Claude_lab/
 
 ---
 
+### Iter 40~44 — 9.77 → 9.87 ✅
+
+**주제**: 코드 정확성 + 카탈로그 간소화
+
+**변경 내용:**
+- `local-server.md`: `find "C:/..."` → `find "/c/..."` (Git Bash 표준 경로)
+- `CLAUDE.md`: Task Documentation Rule 예외에 `.claude/` 설정 파일 추가 (autoloop 충돌 방지)
+- `ref-layout.md`: HTTP API 기본 포트 설명 + 예시 코드 3001→3000 (cocos-editor-server main.js 기본값)
+- `SKILL-GUIDE.md`: `troubleshoot` 설명 30자→10자 간소화 (`(= /fix)` 패턴)
+
+**총 이터레이션 현황 (44회):**
+- 점수: 6.10 → 9.87 (+3.77p)
+- 주요 개선 패턴: Dead link → 경로 일관성 → 포트 일관성 → 카탈로그 완성도 → 설명 간소화
+
+---
+
 ## 인사이트
 
 ### 잘 작동한 것
