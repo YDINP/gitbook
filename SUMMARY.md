@@ -48,6 +48,7 @@
 * [Autoloop — 자율 개선 루프 개발 기록](meta/AUTOLOOP-Dev-Record.md)
 * [Extended Thinking — Adaptive Thinking 활용 가이드](meta/EXTENDED-THINKING-Guide.md)
 * [Multi-Agent 오케스트레이션 패턴](meta/MULTI-AGENT-Patterns.md)
+* [Prompt Caching — 입력 토큰 90% 절감 전략](meta/PROMPT-CACHING-Guide.md)
 
 ---
 
