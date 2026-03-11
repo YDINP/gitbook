@@ -162,6 +162,31 @@ curl -X POST http://localhost:3000/api/node/set_component_property \
 
 ---
 
+## Phase D — 미활용 API 발굴 (61개 전체 분석)
+
+전체 61개 API 중 약 21개(34%)만 활용 중. 고가치 미활용 API 7개 발굴 후 즉시 통합.
+
+### 통합 완료된 미활용 API
+
+| API | 통합 위치 | 효과 |
+|-----|----------|------|
+| `get_project_settings` | cs.md Step 1 | designResolution 자동 읽기 (scale factor 계산 자동화) |
+| `get_project_info` | cs.md Step 1 | 프로젝트명 자동 확인 (캐시 파일명 자동화) |
+| `get_component_info` | cs.md Phase 3 | Widget flag 사전 확인 → position 쓰기 실패 방지 |
+| `undo` | cs.md Phase 3 | 잘못된 속성 즉시 복구 (기존 복구 루프 없음 → 해결) |
+| `find_nodes` | cs-parallel.md Agent E | 패턴으로 복수 UUID 단일 호출 확보 |
+
+### 향후 통합 후보 (중간 가치)
+
+| API | 활용 시나리오 |
+|-----|-------------|
+| `duplicate_node` | 반복 구조 버튼/토글: 하나 생성 후 복제 → API 호출 수 절감 |
+| `get_scene_hierarchy` | `get_all_nodes` + 컴포넌트 정보를 단일 호출로 대체 |
+| `create_prefab` | FULL/CREATE 모드 완료 후 노드 트리 즉시 프리팹화 |
+| `start_preview` | Phase 4 후 런타임 렌더링 시각 확인 (애니메이션 포함) |
+
+---
+
 ## 결론 및 아키텍처 요약
 
 ### /cs 커맨드 개선된 흐름
