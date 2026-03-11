@@ -160,6 +160,18 @@ curl -X POST http://localhost:3000/api/node/set_component_property \
 > Widget 비활성화(enabled=false) 후 re-enable 시 alignment 재실행 → position 초기화.
 > flag를 false로 두는 방식 권장 (enabled toggle 금지).
 
+**의사결정 트리:**
+```
+Widget 노드의 위치/크기 변경 시:
+│
+├─ alignMode == ALWAYS? → widget.left/top/right/bottom 수정
+│
+├─ align flag 활성 축이 있는가? → 해당 Widget 프로퍼티 수정
+│
+└─ 모든 flag false → set_node_transform 직접 사용 가능
+   └─ 변경 후 의존 값 즉시 읽기 필요? → updateAlignment() 호출
+```
+
 ---
 
 ## Phase D — 미활용 API 발굴 (61개 전체 분석)
